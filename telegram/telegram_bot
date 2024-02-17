@@ -1,0 +1,41 @@
+import requests
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, CallbackContext
+
+TOKEN = "BOTINGIZ_API_TOKENI"
+
+def get_exchange_rate(date, currency):
+    base_url = "https://api.ratesapi.io/api/{date}?base=USD".format(date=date)
+    response = requests.get(base_url)
+    data = response.json()
+    if currency.upper() in data['rates']:
+        return data['rates'][currency.upper()]
+    else:
+        return None
+
+def start(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('Assalomu alaykum! Sana va valyutani kiriting (masalan: 2024-01-22 USD):')
+
+def get_rate(update: Update, context: CallbackContext) -> None:
+    text = update.message.text
+    parts = text.split()
+    if len(parts) != 2:
+        update.message.reply_text('Noto\'g\'ri format! Masalan: 2024-01-22 USD')
+        return
+    date, currency = parts
+    exchange_rate = get_exchange_rate(date, currency)
+    if exchange_rate:
+        update.message.reply_text(f"{currency} kursi {date} sanasidagi: {exchange_rate}")
+    else:
+        update.message.reply_text("Kurs topilmadi!")
+
+def main() -> None:
+    updater = Updater(TOKEN)
+    dispatcher = updater.dispatcher
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("get_rate", get_rate))
+    updater.start_polling()
+    updater.idle()
+
+if name == 'main':
+    main()
